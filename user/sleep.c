@@ -4,11 +4,12 @@
 int
 main(int argc, char *argv[])
 {
+  const int stderr = 2;
   int ticks;
 
   if(argc != 2)
   {
-    fprintf(2, "usage: sleep ticks\n");
+    fprintf(stderr, "usage: sleep ticks\n");
     exit(1);
   }
 
