@@ -1,0 +1,6 @@
+1. usertrap () at kernel/trap.c
+2. 0x7(SYS_exec)
+3. it's user mode because ($$status & (1L << 8)) == 0
+4. lw a3,0(zero) / register a3 corresponds to variable num
+5. load page fault
+6. initcode / pid: 1
