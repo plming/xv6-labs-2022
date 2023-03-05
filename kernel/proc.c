@@ -316,6 +316,9 @@ fork(void)
 
   acquire(&wait_lock);
   np->parent = p;
+  
+  /* inherit mask from parent */
+  np->syscall_mask = p->syscall_mask;
   release(&wait_lock);
 
   acquire(&np->lock);
