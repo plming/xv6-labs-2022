@@ -1,0 +1,2 @@
+1. uptime system call can be optimzed by storing "tick" on shared memory.
+2. Text, stack, possible because user bit is set, usyscall page for ugetpid.
