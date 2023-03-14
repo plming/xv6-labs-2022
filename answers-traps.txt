@@ -1,0 +1,8 @@
+# RISC-V assembly
+* According to calling convention, a0~a7 are used to pass arguments.
+* There's no function calls, because compiler optimized with inline function.
+* printf is located on 0x630.
+* register ra's value is 0x38 after jalr.
+* The output is "HE110 World". For big-endian machine, set i as 0x726c6400.
+  There's no need to change 57616 to different value, because endian doesn't matter for hexadecimal representation.
+* Garbage value on register a2 will be printed. It's undefined behavior.
