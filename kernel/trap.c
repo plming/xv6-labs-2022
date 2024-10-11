@@ -77,8 +77,22 @@ usertrap(void)
     exit(-1);
 
   // give up the CPU if this is a timer interrupt.
-  if(which_dev == 2)
+  if(which_dev == 2) {
+    // if alarm is enabled.
+    if(p->interval_tick != 0 || p->alarm_handler != 0) {
+      ++p->ticks_after_alarm;
+
+      // alarm occured.
+      if(p->ticks_after_alarm >= p->interval_tick && !p->is_alarm_handled) {
+        p->is_alarm_handled = 1;
+        p->ticks_after_alarm = 0;
+        memmove(p->alarmframe, p->trapframe, sizeof(*p->alarmframe));
+        p->trapframe->epc = p->alarm_handler;
+      }
+    }
+
     yield();
+  }
 
   usertrapret();
 }
