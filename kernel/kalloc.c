@@ -23,6 +23,8 @@ struct {
   struct run *freelist;
 } kmem;
 
+uint8 num_page_references[NUM_PAGE];
+
 void
 kinit()
 {
@@ -50,6 +52,11 @@ kfree(void *pa)
 
   if(((uint64)pa % PGSIZE) != 0 || (char*)pa < end || (uint64)pa >= PHYSTOP)
     panic("kfree");
+  
+  dereference_page((uint64) pa);
+  if(num_page_references[(uint64)pa / PGSIZE] != 0) {
+    return;
+  }
 
   // Fill with junk to catch dangling refs.
   memset(pa, 1, PGSIZE);
@@ -72,11 +79,22 @@ kalloc(void)
 
   acquire(&kmem.lock);
   r = kmem.freelist;
-  if(r)
+  if(r) {
     kmem.freelist = r->next;
+    num_page_references[(uint64)r / PGSIZE] = 1;
+  }
   release(&kmem.lock);
 
   if(r)
     memset((char*)r, 5, PGSIZE); // fill with junk
   return (void*)r;
+}
+
+void dereference_page(uint64 pa) {
+  int nth = pa / PGSIZE;
+  uint8 count = num_page_references[nth];
+  
+  num_page_references[nth] = count != 0
+    ? count - 1
+    : 0;
 }

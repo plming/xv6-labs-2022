@@ -65,9 +65,44 @@ usertrap(void)
     intr_on();
 
     syscall();
-  } else if((which_dev = devintr()) != 0){
+  } else if(r_scause() == 0xF) {
+    // store/amo page fault
+    uint64 va = r_stval();
+    uint64 pa;
+    pte_t *pte;
+    void *mem;
+    uint flags;
+
+    if(va >= MAXVA) {
+      goto unexpected_scause;
+    }
+    
+    pte = walk(p->pagetable, va, 0);
+    if(!(*pte & PTE_C)) {
+      // it's just read-only page, not for cow.
+      goto unexpected_scause;
+    }
+
+    pa = PTE2PA(*pte);
+    flags = PTE_FLAGS(*pte);
+    flags |= PTE_W;
+    flags &= ~PTE_C;
+
+    if((mem = kalloc()) == 0) {
+      setkilled(p);
+      exit(-1);
+    }
+    memmove(mem, (char*)pa, PGSIZE);
+
+    uvmunmap(p->pagetable, PGROUNDDOWN(va), 1, 1);
+    if(mappages(p->pagetable, PGROUNDDOWN(va), PGSIZE, (uint64)mem, flags) != 0){
+      kfree(mem);
+    }
+  }
+  else if((which_dev = devintr()) != 0){
     // ok
   } else {
+    unexpected_scause:
     printf("usertrap(): unexpected scause %p pid=%d\n", r_scause(), p->pid);
     printf("            sepc=%p stval=%p\n", r_sepc(), r_stval());
     setkilled(p);
