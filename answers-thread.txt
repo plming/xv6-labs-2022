@@ -1,0 +1,16 @@
+Missing keys occur due to race condition. In this case, table is critical section.
+
+Consider below sequences.
+Both threads are trying to insert(using insert() function) different keys, but on same bucket(i).
+Then, they need to adjust linked list. table[i] is NULL at this moment.
+1. thread 0 executed "e->next = n" code to adjust linked list. e->next is NULL.
+2. thread 1 executed "e->next = n" code to adjust linked list.
+   e->next is NULL too. because arguments are already passed to functions.
+3. thread 0 executed "*p = e" so table[i] stored entry's address created on thread 0.
+4. thread 1 executed "*p = e" so table[i] stored entry's address created on thread 1.
+
+Now, let's check variables. table[i] is stored entry's address created on thread 1.
+table[i].next is NULL because e->next is initialized with NULL on both threads.
+Then, where we can find thread 0's entry?
+We can't. Because pointer is overwritten due to race condition.
+So thread 0's entry is counted missing key.
